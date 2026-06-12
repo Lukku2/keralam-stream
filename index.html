@@ -18,7 +18,6 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            /* Extra padding rule for iPhone safe area notch compatibility */
             padding-top: env(safe-area-inset-top);
         }
         /* Sleek scrollbar styling */
@@ -354,7 +353,7 @@ http://149.71.34.166:8002/play/a013/index.m3u8
 http://149.71.34.166:8002/play/a012/index.m3u8
 #EXTINF:-1 tvg-id="News18Kerala.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NEWS18_KERALA/images/LOGO_HD/image.png" group-title="News",News18 Kerala (1080p)
 https://n18syndication.akamaized.net/bpk-tv/News18_Kerala_NW18_MOB/output01/master.m3u8
-#EXTINF:-1 tvg-id="NewsMalayalam24x7.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NEWS_MALAYALAM_24X7/images/LOGO_HD/image.png" group-title="News",News Malayalam 24x7 (1080p)
+#EXTINF:-1 tvg-id="NewsMalayalam24x7.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NEWS_MALAYALALAM_24X7/images/LOGO_HD/image.png" group-title="News",News Malayalam 24x7 (1080p)
 https://d18a8tqmogafg2.cloudfront.net/newsmalayalam/index.m3u8
 #EXTINF:-1 tvg-id="Nickelodeon.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NICK/images/LOGO_HD/image.png" group-title="Kids",Nickelodeon (576p)
 http://149.71.34.166:8000/play/a00u/index.m3u8
@@ -713,31 +712,35 @@ http://stream.zeno.fm/zcxh6wkva18uv
             // Alert user of status
             showNotification(`Connecting: ${chan.name}`);
             
-            // Hide standard overlay first
+            // IMMEDIATELY hide standard overlay completely so it cannot block the video
             playerOverlay.classList.add('opacity-0', 'pointer-events-none');
-
-            // Handle custom Referer notifications inside the player console
-            if (Object.keys(chan.headers).length > 0) {
-                console.info("Requires custom HTTP referrer connection: ", chan.headers);
-            }
+            playerOverlay.classList.add('hidden'); // Force it out of layout space
 
             // Sync layout banners and visualizers
             updatePlayingBanner();
 
             // Detect if selected stream is Audio/FM Radio versus Video
-            const isRadio = chan.group.includes('Radio') || chan.url.endsWith('.mp3') || chan.url.includes('broadwave');
+            const isRadio = chan.group.includes('Radio') || 
+                            chan.url.endsWith('.mp3') || 
+                            chan.url.includes('broadwave') || 
+                            chan.name.toLowerCase().includes('fm') || 
+                            chan.name.toLowerCase().includes('radio');
+
             if (isRadio) {
                 // Show Radio Mode with Vinyl Graphics
                 radioVisualizer.classList.remove('hidden');
+                videoElement.classList.add('hidden'); // Hide video element for radio
                 radioStickerLogo.src = chan.logo || 'https://images.unsplash.com/photo-1598257006458-087169a1f08d?auto=format&fit=crop&w=150&q=80';
                 radioStationTitle.textContent = chan.name;
             } else {
-                // Hide Radio Mode and show video output
+                // Video Mode: Hide Radio Mode, reveal video output window explicitly
                 radioVisualizer.classList.add('hidden');
+                videoElement.classList.remove('hidden');
+                videoElement.style.display = 'block'; // Inline override check
             }
 
             // Stream Playback Trigger
-            playStream(chan.url);
+            playStream(chan.url, isRadio);
 
             // Re-render channel elements to update dynamic dots
             renderChannels();
@@ -772,11 +775,16 @@ http://stream.zeno.fm/zcxh6wkva18uv
         }
 
         // Pure Live HLS Parser Engine
-        function playStream(url) {
+        function playStream(url, isRadio) {
             // Safe teardown of prior play objects
             if (hlsInstance) {
                 hlsInstance.destroy();
                 hlsInstance = null;
+            }
+
+            // Ensure video element resets its hidden state if it needs to show video
+            if (!isRadio) {
+                videoElement.classList.remove('hidden');
             }
 
             if (Hls.isSupported()) {
@@ -791,7 +799,13 @@ http://stream.zeno.fm/zcxh6wkva18uv
                 hlsInstance.attachMedia(videoElement);
                 
                 hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-                    videoElement.play().catch(e => console.warn("Browser prevented autoplay:", e));
+                    // Force overlay away on successful load match
+                    playerOverlay.classList.add('hidden');
+                    videoElement.play().catch(e => {
+                        console.warn("Browser prevented autoplay:", e);
+                        // If browser blocks audio autoplay, we still want to show the video container controls
+                        videoElement.controls = true;
+                    });
                 });
 
                 hlsInstance.on(Hls.Events.ERROR, function(event, data) {
@@ -816,16 +830,16 @@ http://stream.zeno.fm/zcxh6wkva18uv
                 // Safari or Mobile iOS devices fallback Native support
                 videoElement.src = url;
                 videoElement.addEventListener('loadedmetadata', function() {
+                    playerOverlay.classList.add('hidden');
                     videoElement.play().catch(e => console.warn("Browser prevented autoplay:", e));
                 });
             } else {
-                // If browser can't play .m3u8 directly and doesn't support Hls.js
-                // Check if it's an MP3 or standard audio link
+                // Audio direct file fallback check
                 if (url.endsWith('.mp3') || url.includes('broadwave') || url.includes('.aac')) {
                     videoElement.src = url;
                     videoElement.play().catch(e => console.warn("Browser prevented autoplay:", e));
                 } else {
-                    showPlayerFailureState("Incompatible Browser", "This browser does not support HLS (.m3u8) video decoding. Please try modern browser like Google Chrome or Firefox.");
+                    showPlayerFailureState("Incompatible Browser", "This browser does not support HLS (.m3u8) video decoding.");
                 }
             }
         }
