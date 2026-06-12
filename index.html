@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Premium Malayalam IPTV & Radio</title>
+    
+    <link rel="manifest" href="./manifest.json">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Keralam Stream">
+    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1598257006458-087169a1f08d?auto=format&fit=crop&w=192&h=192&q=80">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            /* Extra padding rule for iPhone safe area notch compatibility */
+            padding-top: env(safe-area-inset-top);
+        }
+        /* Sleek scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 99px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4f46e5;
+        }
+        /* Custom Keyframe Animations for Radio Mode */
+        @keyframes spin-slow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 15s linear infinite;
+        }
+        .animate-pulse-glow {
+            animation: pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden select-none">
+
+    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 flex items-center justify-between z-10 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-rose-600 to-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-950/40 border border-indigo-500/20">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-base sm:text-lg font-bold tracking-wide bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">Keralam Stream</h1>
+                <p class="text-[10px] text-slate-400 font-medium">Premium Malayalam TV & Live FM Player</p>
+            </div>
+        </div>
+
+        <button onclick="toggleImportModal()" class="flex items-center space-x-2 bg-slate-800/60 hover:bg-slate-800 text-slate-200 text-xs py-2 px-3 rounded-lg transition-all duration-200 border border-slate-700/50 shadow-md">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span class="hidden sm:inline font-semibold">Import Playlist</span>
+        </button>
+    </header>
+
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+        <div class="md:hidden bg-slate-900 border-b border-slate-800/60 p-2 flex items-center space-x-2 overflow-x-auto whitespace-nowrap scrollbar-none" id="mobile-categories-bar">
+            </div>
+
+        <div class="flex-1 bg-black flex flex-col justify-between relative overflow-hidden">
+            
+            <div class="relative w-full aspect-video md:h-full md:aspect-auto flex items-center justify-center bg-slate-950">
+                <video id="main-video" class="w-full h-full object-contain z-0" controls autoplay playsinline></video>
+
+                <div id="radio-visualizer" class="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center text-center p-6 transition-all duration-500 hidden z-10 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+                    <div class="absolute w-72 h-72 bg-indigo-600/10 rounded-full blur-3xl animate-pulse-glow"></div>
+                    <div class="absolute w-60 h-60 bg-rose-600/10 rounded-full blur-3xl animate-pulse-glow delay-75"></div>
+
+                    <div class="relative w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-slate-950 border-8 border-slate-800 shadow-2xl flex items-center justify-center animate-spin-slow">
+                        <div class="absolute inset-2 border border-slate-900/60 rounded-full"></div>
+                        <div class="absolute inset-6 border border-slate-800/40 rounded-full"></div>
+                        <div class="absolute inset-10 border border-slate-900/60 rounded-full"></div>
+                        <div class="absolute inset-14 border border-slate-800/40 rounded-full"></div>
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-indigo-600 via-purple-600 to-rose-600 p-0.5 shadow-inner flex items-center justify-center">
+                            <img id="radio-sticker-logo" class="w-full h-full rounded-full object-cover border border-white/20" src="" alt="" onerror="this.src='https://images.unsplash.com/photo-1598257006458-087169a1f08d?auto=format&fit=crop&w=150&q=80'">
+                        </div>
+                        <div class="absolute w-3 h-3 bg-slate-950 rounded-full border border-slate-700"></div>
+                    </div>
+
+                    <div class="flex items-end justify-center space-x-1.5 mt-8 h-12">
+                        <div class="w-1 bg-indigo-500 rounded-full h-3 animate-[pulse_1s_infinite_alternate]"></div>
+                        <div class="w-1 bg-indigo-400 rounded-full h-8 animate-[pulse_0.8s_infinite_alternate] delay-100"></div>
+                        <div class="w-1 bg-rose-500 rounded-full h-5 animate-[pulse_1.2s_infinite_alternate] delay-150"></div>
+                        <div class="w-1 bg-purple-500 rounded-full h-10 animate-[pulse_0.9s_infinite_alternate] delay-75"></div>
+                        <div class="w-1 bg-rose-400 rounded-full h-4 animate-[pulse_1.1s_infinite_alternate] delay-200"></div>
+                    </div>
+
+                    <p class="text-xs text-indigo-400 font-semibold tracking-widest uppercase mt-4">Now Broadcasting FM</p>
+                    <h3 id="radio-station-title" class="text-xl sm:text-2xl font-bold text-white mt-1 max-w-md">Malayalam FM Radio</h3>
+                </div>
+
+                <div id="player-overlay" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center text-center p-6 transition-all duration-300 z-20">
+                    <div class="w-20 h-20 bg-indigo-600/10 rounded-2xl flex items-center justify-center mb-5 border border-indigo-500/20 shadow-xl shadow-indigo-950/50">
+                        <svg class="w-10 h-10 text-indigo-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2" id="overlay-title">Malayalam IPTV & Radio Player</h3>
+                    <p class="text-slate-400 text-sm max-w-sm leading-relaxed" id="overlay-desc">Select any Malayalam channel or live FM radio station from the list below to enjoy smooth buffering-free streaming.</p>
+                </div>
+
+                <div id="toast" class="absolute bottom-4 left-4 right-4 md:left-6 md:right-auto bg-slate-900 border border-indigo-500/30 text-indigo-300 text-xs px-4 py-3 rounded-xl shadow-2xl shadow-black/80 opacity-0 transform translate-y-2 transition-all duration-300 pointer-events-none flex items-center space-x-2 z-30">
+                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-ping"></span>
+                    <span id="toast-message" class="font-medium">Loading stream...</span>
+                </div>
+            </div>
+
+            <div id="now-playing-banner" class="bg-slate-900 border-t border-slate-800/80 p-4 flex items-center justify-between shrink-0 hidden md:flex">
+                <div class="flex items-center space-x-4 min-w-0">
+                    <img id="current-logo" class="w-14 h-14 rounded-xl object-contain bg-slate-950 p-1.5 border border-slate-800/80 shadow-md" src="" alt="Channel" onerror="this.src='https://images.unsplash.com/photo-1598257006458-087169a1f08d?auto=format&fit=crop&w=150&q=80'">
+                    <div class="leading-tight truncate min-w-0">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-[10px] px-2.5 py-0.5 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-full font-bold uppercase tracking-wider" id="current-group">General</span>
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-emerald-400 text-[10px] font-extrabold tracking-wider uppercase">Live Connection</span>
+                        </div>
+                        <h2 class="text-base font-bold text-slate-100 truncate" id="current-title">Choose your Channel</h2>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleFavoriteCurrent()" class="p-3 bg-slate-800/60 hover:bg-slate-800 text-rose-500 hover:text-rose-400 rounded-xl transition-all border border-slate-700/40 shadow-md">
+                        <svg id="current-fav-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full md:w-96 bg-slate-900 border-t md:border-t-0 md:border-l border-slate-800/80 flex flex-col overflow-hidden shrink-0">
+            
+            <div id="mobile-now-playing" class="md:hidden bg-slate-950 border-b border-slate-800/60 p-2.5 px-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img id="mobile-current-logo" class="w-9 h-9 rounded-lg object-contain bg-slate-900 p-1 border border-slate-800/60" src="" alt="Logo" onerror="this.src='https://images.unsplash.com/photo-1598257006458-087169a1f08d?auto=format&fit=crop&w=150&q=80'">
+                    <div class="leading-none">
+                        <h4 class="text-xs font-bold text-white truncate max-w-[200px]" id="mobile-current-title">Select Channel</h4>
+                        <span class="text-[9px] text-indigo-400 font-semibold tracking-wide uppercase mt-0.5 block" id="mobile-current-group">No Stream Active</span>
+                    </div>
+                </div>
+                <button onclick="toggleFavoriteCurrent()" class="p-2 bg-slate-900 hover:bg-slate-800 text-rose-500 rounded-lg border border-slate-800">
+                    <svg id="mobile-fav-icon" class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-3 bg-slate-900/60 border-b border-slate-800/80 space-y-2.5">
+                <div class="relative">
+                    <input type="text" id="search-input" onkeyup="filterChannels()" placeholder="Search channels or FM..." class="w-full bg-slate-950 border border-slate-800/80 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500/80 transition-all">
+                    <div class="absolute left-3 top-3 text-slate-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <select id="category-select" onchange="filterChannels()" class="flex-1 bg-slate-950 border border-slate-800/80 rounded-xl py-2 px-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500/80">
+                        <option value="ALL">All Categories</option>
+                        <option value="FAVORITES">⭐ Favorites Only</option>
+                    </select>
+
+                    <button id="fav-toggle-btn" onclick="toggleFavFilterOnly()" class="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800/80 rounded-xl text-amber-500 hover:text-amber-400 transition-all" title="Toggle Favorites Filter">
+                        <svg class="w-4.5 h-4.5" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.243.588 1.81l-3.97 2.88a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.88a1 1 0 00-1.178 0l-3.97 2.88c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118l-3.97-2.88c-.773-.568-.374-1.81.588-1.81h4.906a1 1 0 00.95-.69l1.519-4.674z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="channels-container" class="flex-1 overflow-y-auto p-3 space-y-1.5 bg-slate-950/20">
+                <div class="flex items-center justify-center py-12 text-slate-500 flex-col">
+                    <svg class="w-8 h-8 animate-spin text-indigo-500 mb-2" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-xs">Initializing list parsing...</p>
+                </div>
+            </div>
+
+            <div class="px-4 py-2.5 bg-slate-950 border-t border-slate-800/80 text-[10px] text-slate-500 flex justify-between items-center shrink-0 font-mono">
+                <span id="channel-count">Channels: 0</span>
+                <span>Malayalam Feed Engine v2.5</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="import-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 transition-all duration-300 pointer-events-none opacity-0">
+        <div class="bg-slate-900 border border-slate-800/90 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform scale-95 transition-all duration-300">
+            <div class="p-4 border-b border-slate-800/80 flex justify-between items-center bg-slate-950/40">
+                <h3 class="font-bold text-white text-base">Load Custom M3U / M3U8</h3>
+                <button onclick="toggleImportModal()" class="text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Paste M3U Content</label>
+                    <textarea id="raw-m3u-input" placeholder="Paste #EXTM3U content here..." class="w-full h-32 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-700 focus:outline-none focus:border-indigo-500/80 font-mono"></textarea>
+                </div>
+                
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-slate-800"></div>
+                    <span class="flex-shrink mx-4 text-slate-600 text-[10px] uppercase font-bold tracking-wider">or</span>
+                    <div class="flex-grow border-t border-slate-800"></div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Load Local file</label>
+                    <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-800 border-dashed rounded-xl cursor-pointer bg-slate-950 hover:bg-slate-900 transition-all hover:border-slate-700">
+                        <div class="flex flex-col items-center justify-center pt-4 pb-4">
+                            <svg class="w-6 h-6 text-slate-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <p class="text-xs text-slate-400"><span class="font-semibold">Select M3U Playlist file</span> from device</p>
+                        </div>
+                        <input id="file-m3u-input" type="file" accept=".m3u,.m3u8,.txt" class="hidden" onchange="handleFileSelect(event)" />
+                    </label>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-950/80 border-t border-slate-800/80 flex justify-end space-x-2">
+                <button onclick="toggleImportModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl font-medium transition-all">Close</button>
+                <button onclick="loadCustomPlaylist()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-xl shadow-lg font-semibold transition-all">Import Now</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Preload user's Malayalam playlist
+        const EXTM3U_PLAYLIST = `#EXTM3U
+#EXTINF:-1 tvg-id="24News.in@SD" tvg-logo="https://sund-images.sunnxt.com/202222/300x300_24News_202222_d63feca0-79ae-47ea-b75a-66c17d456f4c.png" group-title="News",24 News (576p)
+https://mumt07.tangotv.in/zHjX9OFlTWENTYFOURNEWS/index.m3u8
+#EXTINF:-1 tvg-id="AmritaTV.in@SD" tvg-logo="https://i.imgur.com/WdSjlPl.png" group-title="Entertainment",Amrita TV (720p)
+https://ddash74r36xqp.cloudfront.net/master.m3u8
+#EXTINF:-1 tvg-id="AnandTV.uk@SD" tvg-logo="https://i.imgur.com/5VOPFzs.png" group-title="General",Anand TV (720p) [Not 24/7]
+https://live-anandtv.anandmedia.net/anandtvapp/anandtv/index.m3u8
+#EXTINF:-1 tvg-id="Asianet.in@SD" tvg-logo="https://i.imgur.com/Wv7MOzg.png" http-referrer="https://tulnit.com" group-title="Entertainment",Asianet (576p)
+#EXTVLCOPT:http-referrer=https://tulnit.com
+https://anet.keralive.workers.dev/v1/master/a0d007312bfd99c47f76b77ae26b1ccdaae76cb1/starasianet1_live_https/index.m3u8
+#EXTINF:-1 tvg-id="AsianetMiddleEast.in@SD" tvg-logo="https://i.imgur.com/du9iZ0s.png" group-title="Entertainment",Asianet Middle East (576p)
+https://mumt03.tangotv.in/ASIANETMIDDLEEAST/index.m3u8
+#EXTINF:-1 tvg-id="AsianetMovies.in@SD" tvg-logo="https://i.imgur.com/cps67hs.png" http-referrer="https://tulnit.com" group-title="Movies",Asianet Movies (576p)
+#EXTVLCOPT:http-referrer=https://tulnit.com
+https://anet.keralive.workers.dev/v1/master/a0d007312bfd99c47f76b77ae26b1ccdaae76cb1/asianetmovies_live_https/index.m3u8
+#EXTINF:-1 tvg-id="AsianetMovies.in@HD" tvg-logo="https://i.imgur.com/cps67hs.png" group-title="Movies",Asianet Movies HD (1080p)
+http://149.71.34.166:8000/play/a06e/index.m3u8
+#EXTINF:-1 tvg-id="AsianetNews.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_ASIANET_NEWS/images/LOGO_HD/image.png" group-title="News",Asianet News (1080p)
+https://amg13737-amg13737c1-amgplt0016.playout.now3.amagi.tv/playlist/amg13737-amg13737c1-amgplt0016/playlist.m3u8
+#EXTINF:-1 tvg-id="AsianetPlus.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_ASIANET_PLUS/images/LOGO_HD/image.png" http-referrer="https://tulnit.com" group-title="Entertainment",Asianet Plus (396p)
+#EXTVLCOPT:http-referrer=https://tulnit.com
+https://anet.keralive.workers.dev/v1/master/a0d007312bfd99c47f76b77ae26b1ccdaae76cb1/asianetplus_live_https/index.m3u8
+#EXTINF:-1 tvg-id="BigTV24x7.in@SD" tvg-logo="https://i.postimg.cc/rpHrRxR5/big_tv_malayalam.png" group-title="News",Big TV 24x7 (576i)
+https://d2gvyg6lvauoko.cloudfront.net/230226/bigtvmalyalam/chunks.m3u8
+#EXTINF:-1 tvg-id="CMalayalamTV.ca@SD" tvg-logo="https://i.imgur.com/rpg0bQA.png" group-title="Culture",C Malayalam TV (1080p)
+https://2-fss-2.streamhoster.com/pl_120/206508-3261972-1/playlist.m3u8
+#EXTINF:-1 tvg-id="CCV.in@SD" tvg-logo="https://i.imgur.com/4ss0KfA.png" group-title="General",CCV (480p)
+https://5a1178b42cc03.streamlock.net/8212/8212/playlist.m3u8
+#EXTINF:-1 tvg-id="DarshanaTV.in@SD" tvg-logo="https://dtil.tmsimg.com/assets/s142774_ld_h15_aa.png?lock=720x540" group-title="Entertainment",Darshana TV (576p)
+https://mumt04.tangotv.in/DARSHANATV/index.m3u8
+#EXTINF:-1 tvg-id="DDMalayalam.in@SD" tvg-logo="https://i.postimg.cc/BZjmjJJs/DD-Malayalam.png" group-title="Entertainment",DD Malayalam (576p)
+https://mumt02.tangotv.in/DDMALAYALAM/index.m3u8
+#EXTINF:-1 tvg-id="FlowersTV.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_FLOWERS_TV/images/LOGO_HD/image.png" group-title="Entertainment",Flowers TV (576p)
+http://103.72.101.252:8080/live/634.m3u8
+#EXTINF:-1 tvg-id="FlowersTVUSA.us@SD" tvg-logo="https://upload.wikimedia.org/wikipedia/ml/1/1c/Flowers-Onam.png" group-title="Culture",Flowers TV USA
+https://yuppmedtaorire.akamaized.net/v1/master/a0d007312bfd99c47f76b77ae26b1ccdaae76cb1/flowers_nim_https/050522/flowers/playlist.m3u8
+#EXTINF:-1 tvg-id="GarshomTV.uk@SD" tvg-logo="https://i.imgur.com/KnbwUyb.png" group-title="Culture",Garshom TV (360p) [Not 24/7]
+https://og2qd3aal7an-hls-live.5centscdn.com/garshomtv/d0dbe915091d400bd8ee7f27f0791303.sdp/playlist.m3u8
+#EXTINF:-1 tvg-id="GoodnessTV.in@SD" tvg-logo="https://dtil.tmsimg.com/assets/s143091_ld_h15_aa.png?lock=720x540" group-title="Religious",Goodness TV (576p)
+https://mumt02.tangotv.in/GOODNESSTV/index.m3u8
+#EXTINF:-1 tvg-id="HarvestTV.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_HARVEST_TV_24X7/images/LOGO_HD/image.png" group-title="Religious",Harvest TV (720p)
+https://7mbd4ogkr3gx-hls-live.wmncdn.net/harvesttvlive1/bbb19eae240ec100af921d511efc86a0.sdp/index.m3u8
+#EXTINF:-1 tvg-id="HarvestTVKeralam.in@SD" tvg-logo="https://i.imgur.com/1DyPuIt.png" group-title="Religious",Harvest TV Keralam (720p)
+https://7mbd4ogkr3gx-hls-live.wmncdn.net/harvestenglish/d1796a22d24e8696c7d5d0b5c349fdd2.sdp/index.m3u8
+#EXTINF:-1 tvg-id="JaihindTV.in@SD" tvg-logo="https://i.imgur.com/NaiA73p.png" group-title="Entertainment",Jaihind TV (576p)
+https://mumt03.tangotv.in/JAIHIND/index.m3u8
+#EXTINF:-1 tvg-id="JanamTV.in@SD" tvg-logo="https://dtil.tmsimg.com/assets/s143221_ld_h15_aa.png?lock=720x540" group-title="News",Janam TV (576p)
+https://yuppmedtaorire.akamaized.net/v1/master/a0d007312bfd99c47f76b77ae26b1ccdaae76cb1/janamtv_nim_https/140622/janamtv/playlist.m3u8
+#EXTINF:-1 tvg-id="JanapriyamTV.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Janapriyam_News.png" group-title="Entertainment",Janapriyam TV (480p)
+http://103.72.101.252:8080/live/1455.m3u8
+#EXTINF:-1 tvg-id="JeevanTV.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Jeevan_TV.png" group-title="General",Jeevan TV (576p)
+https://cdn-3.pishow.tv/live/1467/master.m3u8
+#EXTINF:-1 tvg-id="KairaliArabia.in@SD" tvg-logo="https://i.imgur.com/BBEfplL.png" group-title="General",Kairali Arabia (576p)
+https://mumt03.tangotv.in/KAIRALIARABIA/index.m3u8
+#EXTINF:-1 tvg-id="KairaliNews.in@SD" tvg-logo="https://dtil.tmsimg.com/assets/s143246_ld_h15_aa.png?lock=720x540" group-title="News",Kairali News (720p)
+https://cdn-3.pishow.tv/live/1469/master.m3u8
+#EXTINF:-1 tvg-id="KairaliTV.in@SD" tvg-logo="https://upload.wikimedia.org/wikipedia/en/thumb/6/6e/Kairali_TV.svg/500px-Kairali_TV.svg.png" group-title="General",Kairali TV (576p)
+https://mumt01.tangotv.in/KAIRALI/index.m3u8
+#EXTINF:-1 tvg-id="KairaliWe.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_KAIRALI_WE/images/LOGO_HD/image.png" group-title="Movies",Kairali We (576p)
+https://cdn-3.pishow.tv/live/1530/master.m3u8
+#EXTINF:-1 tvg-id="KalikaTV.in@SD" tvg-logo="https://i.imgur.com/XWXFoJA.png" group-title="Music",Kalika TV (576p)
+http://server.applelive.in/kalikatv/kalikatv.m3u8
+#EXTINF:-1 tvg-id="KannurVision.in@SD" tvg-logo="https://i.imgur.com/FCXqPer.png" group-title="News",Kannur Vision (1080p)
+https://stream.logichost.in/kannurvision/live/playlist.m3u8
+#EXTINF:-1 tvg-id="KappaTV.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Kappa_TV.png" group-title="Lifestyle",Kappa TV (576p)
+https://cdn-3.pishow.tv/live/1123/master.m3u8
+#EXTINF:-1 tvg-id="KCLTV.in@SD" tvg-logo="https://i.imgur.com/bkp9dIm.png" group-title="Entertainment",KCL TV (720p)
+https://kcltv.livebox.co.in/kclhls/live.m3u8
+#EXTINF:-1 tvg-id="KeralaVision.in@SD" tvg-logo="https://i.imgur.com/SWNjyyp.png" group-title="Entertainment",Kerala Vision (576p)
+https://mumt03.tangotv.in/KERALAVISION/index.m3u8
+#EXTINF:-1 tvg-id="KiteVicters.in@SD" tvg-logo="https://i.imgur.com/kj4OEsb.png" group-title="Education",KITE Victers (720p) [Not 24/7]
+https://932y4x26ljv8-hls-live.5centscdn.com/victers/tv.stream/playlist.m3u8
+#EXTINF:-1 tvg-id="MSignMedia.in@SD" tvg-logo="https://i.imgur.com/8fdUkOl.png" group-title="News",M Sign Media (720p) [Not 24/7]
+http://rtmp2.logicwebs.in:1935/msign/msignmedia/playlist.m3u8
+#EXTINF:-1 tvg-id="MagnavisionTV.uk@SD" tvg-logo="https://i.imgur.com/mUHixbi.png" group-title="Entertainment",Magna Vision (1080p)
+https://j78dpa3edq5r-hls-live.5centscdn.com/abr/0864028584026e6ad9cdf922473177a4/playlist.m3u8
+#EXTINF:-1 tvg-id="MalabarNews.in@SD" tvg-logo="https://i.imgur.com/Un2gxt4.png" group-title="News",Malabar News (720p)
+http://cloud.logichost.in:1935/live/malabarnews/index.m3u8
+#EXTINF:-1 tvg-id="ManoramaNews.in@SD" tvg-logo="https://i.imgur.com/adjRrVx.png" group-title="News",Manorama News (1080p)
+https://mmtvnews1.akamaized.net/v1/master/673630b269b766886555eebfddd4f27f3de3ab50/mmtvNewsCampaign1/index.m3u8
+#EXTINF:-1 tvg-id="MathrubhumiNews.in@SD" tvg-logo="https://i.imgur.com/diQftzP.png" group-title="News",Mathrubhumi News (576p)
+https://mumt02.tangotv.in/MATHRUBHUMINEWS/index.m3u8
+#EXTINF:-1 tvg-id="Mayyazhi.in@SD" tvg-logo="https://i.imgur.com/E3WYWF5.jpg" group-title="General",Mayyazhi (720p) [Not 24/7]
+http://131.153.22.8:1935/MAYYAZHI/live/playlist.m3u8
+#EXTINF:-1 tvg-id="MazhavilManorama.in@SD" tvg-logo="https://i.imgur.com/fjgzW20.png" group-title="Entertainment",Mazhavil Manorama (396p)
+https://yuppmedtaorire.akamaized.net/v1/master/a0d007312bfd99c47f76b77ae26b1ccdaae76cb1/mazhavilmanorama_nim_https/050522/mazhavilmanorama/playlist.m3u8
+#EXTINF:-1 tvg-id="MazhavilManorama.in@HD" tvg-logo="https://i.imgur.com/fjgzW20.png" group-title="Entertainment",Mazhavil Manorama HD (1080p)
+https://cdn-7.pishow.tv/live/1129/master.m3u8
+#EXTINF:-1 tvg-id="MediaOne.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_MEDIA_ONE/images/LOGO_HD/image.png" group-title="News",Media One (720p)
+https://cdn-3.pishow.tv/live/1481/master.m3u8
+#EXTINF:-1 tvg-id="meWATCHLIVE1.sg@SD" tvg-logo="https://i.imgur.com/ppxUDxB.png" group-title="Entertainment",meWATCH LIVE 1 (1080p)
+https://tglmp04.akamaized.net/out/v1/898b1cbac7c747e3b1f3deb460e9b67e/manifest.mpd
+#EXTINF:-1 tvg-id="MTA7Asia.uk@SD" tvg-logo="https://i.imgur.com/3Nl8Tpu.png" group-title="Religious",MTA7 Asia (1080p)
+https://livemtaasia.akamaized.net/hls/live/2039224/mtaasia2/playlist.m3u8
+#EXTINF:-1 tvg-id="NationalGeographic.in@HD" tvg-logo="https://dtil.tmsimg.com/assets/s143574_ld_h15_aa.png?lock=720x540" group-title="Documentary",National Geographic HD (576p)
+http://149.71.34.166:8002/play/a013/index.m3u8
+#EXTINF:-1 tvg-id="NationalGeographicWild.in@HD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NAT_GEO_WILD/images/LOGO_HD/image.png" group-title="Documentary",National Geographic Wild HD (1080p)
+http://149.71.34.166:8002/play/a012/index.m3u8
+#EXTINF:-1 tvg-id="News18Kerala.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NEWS18_KERALA/images/LOGO_HD/image.png" group-title="News",News18 Kerala (1080p)
+https://n18syndication.akamaized.net/bpk-tv/News18_Kerala_NW18_MOB/output01/master.m3u8
+#EXTINF:-1 tvg-id="NewsMalayalam24x7.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NEWS_MALAYALAM_24X7/images/LOGO_HD/image.png" group-title="News",News Malayalam 24x7 (1080p)
+https://d18a8tqmogafg2.cloudfront.net/newsmalayalam/index.m3u8
+#EXTINF:-1 tvg-id="Nickelodeon.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NICK/images/LOGO_HD/image.png" group-title="Kids",Nickelodeon (576p)
+http://149.71.34.166:8000/play/a00u/index.m3u8
+#EXTINF:-1 tvg-id="NTV7.my@SD" tvg-logo="https://i.imgur.com/jDWR3xI.png" group-title="General",NTV7
+https://tonton-live-switch-ssar.akamaized.net/stream-ntv7/master.m3u8?bpkio_serviceid=6c0958d82a830a02ca0936d9cfab8311
+#EXTINF:-1 tvg-id="PottaDivineTVUSA.us@SD" tvg-logo="https://i.imgur.com/Yx0AnLW.png" group-title="Religious",Potta-Divine TV USA (480p)
+https://playout7multirtmp.tulix.tv/live21/Stream1/playlist.m3u8
+#EXTINF:-1 tvg-id="PravasiChannel.in@SD" tvg-logo="https://i.imgur.com/1dHarb7.png" group-title="Undefined",Pravasi Channel (1080p)
+https://m6gdavepdn93-hls-live.5centscdn.com/pravasi/d0dbe915091d400bd8ee7f27f0791303.sdp/playlist.m3u8
+#EXTINF:-1 tvg-id="RajMusixMalayalam.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_RAJ_MUSIX_MALAYALAM/images/LOGO_HD/image.png" group-title="Music",Raj Musix Malayalam (576p)
+https://mumt04.tangotv.in/RAJMUSIXMALAYALAM/index.m3u8
+#EXTINF:-1 tvg-id="RajNewsMalayalam.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_RAJ_NEWS_MALAYALAM/images/LOGO_HD/image.png" group-title="News",Raj News Malayalam (576p)
+https://mumt04.tangotv.in/RAJNEWSMALAYALAM/index.m3u8
+#EXTINF:-1 tvg-id="RealNewsKerala.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Real_News_Kerala.png" group-title="News",Real News Kerala (1080p) [Not 24/7]
+https://bk7l298nyx53-hls-live.5centscdn.com/realnews/e7dee419f91aa9e65939d3677fb9c4f5.sdp/playlist.m3u8
+#EXTINF:-1 tvg-id="ReporterTV.in@SD" tvg-logo="https://dtil.tmsimg.com/assets/s85096_ld_h15_aa.png?lock=720x540" group-title="News",Reporter TV (576p)
+https://segment.yuppcdn.net/050522/reporter/playlist.m3u8
+#EXTINF:-1 tvg-id="RTMParlimenDewanNegara.my@SD" tvg-logo="https://i.postimg.cc/mgrVsTMY/header.png" group-title="Legislative",RTM Parlimen (Dewan Negara) [Geo-blocked]
+https://d25tgymtnqzu8s.cloudfront.net/smil:negara/playlist.m3u8?id=8
+#EXTINF:-1 tvg-id="RTMParlimenDewanRakyat.my@SD" tvg-logo="https://i.postimg.cc/mgrVsTMY/header.png" group-title="Legislative",RTM Parlimen (Dewan Rakyat) [Geo-blocked]
+https://d25tgymtnqzu8s.cloudfront.net/smil:rakyat/playlist.m3u8?id=7
+#EXTINF:-1 tvg-id="SafariTV.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_SAFARI_TV/images/LOGO_HD/image.png" group-title="Documentary",Safari TV (480p) [Not 24/7]
+https://j78dp346yq5r-hls-live.5centscdn.com/safari/live.stream/playlist.m3u8
+#EXTINF:-1 tvg-id="SelangorTV.my@SD" tvg-logo="https://www.selangor.gov.my/selangor/resources/Image/LOGO/SelangorTV.png" group-title="General",SelangorTV (1080p)
+https://live.mana2.my/SelangorTv/index.m3u8?auth_key=1745177902-0210d7bbc24749879b1c370bfbd2b512-0-1a02652c616fd55ef43edbcf07d9c7dd&token=1745177902-0210d7bbc24749879b1c370bfbd2b512-0-1a02652c616fd55ef43edbcf07d9c7dd
+#EXTINF:-1 tvg-id="Shalom.in@SD" tvg-logo="https://dtil.tmsimg.com/assets/s143774_ld_h15_aa.png?lock=720x540" group-title="Religious",Shalom (1080p)
+https://d2c4zqo2rb5uf1.cloudfront.net/master.m3u8
+#EXTINF:-1 tvg-id="Shalom.in@Global" tvg-logo="https://dtil.tmsimg.com/assets/s143774_ld_h15_aa.png?lock=720x540" group-title="Religious",Shalom Global (1080p)
+https://d28xtgmk9tfk6b.cloudfront.net/master.m3u8
+#EXTINF:-1 tvg-id="ShalomAmerica.us@SD" tvg-logo="https://i.imgur.com/qUjsV79.png" group-title="Religious",Shalom TV (720p) [Not 24/7]
+https://livestreamcdn.net:444/ShalomTV/ShalomTV/playlist.m3u8
+#EXTINF:-1 tvg-id="ShekinahTV.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Shekinah.png" group-title="Undefined",Shekinah TV (1080p)
+https://livetv.timeiptv.in/ShekinahNewsIndia/955ad3298db330b5ee880c2c9e6f23a0.sdp/playlist.m3u8
+#EXTINF:-1 tvg-id="SonySportsTen1.in@HD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_SONY_SPORTS_TEN_1/images/LOGO_HD/image.png" group-title="Sports",Sony Sports Ten 1 HD (1080p) [Geo-blocked]
+https://sl.vodep39240327.workers.dev/channel/SONY%20TEN%201%20HD.m3u8
+#EXTINF:-1 tvg-id="SonyYay.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_SONY_YAY/images/LOGO_HD/image.png" group-title="Animation;Kids",Sony Yay! (1080p) [Geo-blocked]
+https://sl.vodep39240327.workers.dev/channel/SONY%20YAY.m3u8
+#EXTINF:-1 tvg-id="Starnet.in@SD" tvg-logo="https://i.imgur.com/J3jB7Kr.png" group-title="General",Starnet (480p)
+https://5a1178b42cc03.streamlock.net/8220/8220/playlist.m3u8
+#EXTINF:-1 tvg-id="Swantham.in@SD" tvg-logo="https://i.imgur.com/ye6v4GP.png" group-title="Entertainment",Swantham (576p)
+http://cloud.logichost.in:1935/SWANTHAM/live/index.m3u8
+#EXTINF:-1 tvg-id="TimeVisionNews.in@SD" tvg-logo="https://i.imgur.com/qvuOBP7.png" group-title="News",Time Vision News (720p)
+http://rtmp.logichost.in:1935/timevision/timevision/playlist.m3u8
+#EXTINF:-1 tvg-id="VCV.in@SD" tvg-logo="https://i.imgur.com/KbU36xI.png" group-title="General",VCV (720p) [Not 24/7]
+https://5a1178b42cc03.streamlock.net/8210/8210/playlist.m3u8
+#EXTINF:-1 tvg-id="WayanadVision.in@SD" tvg-logo="https://i.imgur.com/yF2C4Dt.png" group-title="General",Wayanad Vision (1080p)
+https://cloudsavre.in.net/hls/stream.m3u8
+#EXTINF:-1 tvg-id="WeOneKerala.in@SD" tvg-logo="https://i.imgur.com/iZufxya.jpg" group-title="General",We One Kerala (720p) [Geo-blocked]
+http://kl.logicwebs.in:1935/sreemedia/sreemedia/playlist.m3u8
+#EXTINF:-1 tvg-id="ZeeMalayalamNews.in@SD" tvg-logo="https://english.cdn.zeenews.com/images/logo/zee-malayalam-17.svg" group-title="News",Zee Malayalam News (720p)
+https://d1ty2af03alkwd.cloudfront.net/index_4.m3u8
+#EXTINF:-1,AIR Malayalam
+http://airmalayalam-lh.akamaihd.net/i/airmalayalam_1@507816/master.m3u8
+#EXTINF:-1,Radio Ananthapuri
+http://59.90.28.91:88/broadwavehigh.mp3?src=1
+#EXTINF:-1,Radio Mango
+https://bcovlive-a.akamaihd.net/19b535b7499a4719a5c19e043063f5d9/ap-southeast-1/6034685947001/playlist.m3u8
+#EXTINF:-1,94.3 Club FM
+http://18003.live.streamtheworld.com/CLUBFMUAEAAC.aac
+#EXTINF:-1,Hello Radio
+http://148.72.210.73:8000/helloradio.ogg
+#EXTINF:-1,Radio Media Village
+http://184.154.43.106:8145/stream
+#EXTINF:-1,Air Kochi FM
+https://air.pc.cdn.bitgravity.com/air/live/pbaudio045/chunklist.m3u8
+#EXTINF:-1,AIR Kochi FM Rainbow
+http://air.pc.cdn.bitgravity.com/air/live/pbaudio044/playlist.m3u8
+#EXTINF:-1,AIR Kozhikode Real FM
+http://air.pc.cdn.bitgravity.com/air/live/pbaudio083/playlist.m3u8
+#EXTINF:-1,AIR Manjeri FM
+http://air.pc.cdn.bitgravity.com/air/live/pbaudio101/playlist.m3u8
+#EXTINF:-1,AIR RAINBOW FM KOCHI 107.5
+http://stream.zeno.fm/zcxh6wkva18uv
+#EXTINF:-1,AIR Thrissur`;
+
+        // Application Global States
+        let channels = [];
+        let categories = new Set();
+        let favorites = new Set();
+        let currentChannel = null;
+        let hlsInstance = null;
+        let selectedCategory = "ALL";
+        let isFavOnly = false;
+        let fileLoadedContent = "";
+
+        // UI references
+        const videoElement = document.getElementById('main-video');
+        const playerOverlay = document.getElementById('player-overlay');
+        const overlayTitle = document.getElementById('overlay-title');
+        const overlayDesc = document.getElementById('overlay-desc');
+        const radioVisualizer = document.getElementById('radio-visualizer');
+        const radioStickerLogo = document.getElementById('radio-sticker-logo');
+        const radioStationTitle = document.getElementById('radio-station-title');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        // Startup Trigger
+        window.onload = function() {
+            // Restore persistent favorites if present
+            const savedFavorites = sessionStorage.getItem('kerala_stream_favs');
+            if (savedFavorites) {
+                favorites = new Set(JSON.parse(savedFavorites));
+            }
+
+            // Load and parse the default Malayalam playlist
+            parseM3U(EXTM3U_PLAYLIST);
+        };
+
+        // Complete robust M3U line parser
+        function parseM3U(m3uString) {
+            channels = [];
+            categories = new Set();
+            
+            const lines = m3uString.split('\n');
+            let currentMeta = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                if (line.startsWith('#EXTINF:')) {
+                    currentMeta = {};
+                    
+                    // Regex patterns to capture metadata keys
+                    const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                    const groupMatch = line.match(/group-title="([^"]+)"/);
+                    const idMatch = line.match(/tvg-id="([^"]+)"/);
+                    
+                    const commaIdx = line.lastIndexOf(',');
+                    let name = "Unknown Stream";
+                    if (commaIdx !== -1) {
+                        name = line.substring(commaIdx + 1).trim();
+                    }
+
+                    currentMeta.name = name;
+                    currentMeta.logo = logoMatch ? logoMatch[1] : '';
+                    currentMeta.group = groupMatch ? groupMatch[1] : '';
+                    currentMeta.tvgId = idMatch ? idMatch[1] : name.replace(/\s+/g, '');
+                    currentMeta.headers = {};
+                } else if (line.startsWith('#EXTVLCOPT:')) {
+                    // Extract custom VLC headers if available (e.g. referrers)
+                    if (currentMeta) {
+                        const optionContent = line.substring(11).trim();
+                        const parts = optionContent.split('=');
+                        if (parts.length === 2) {
+                            currentMeta.headers[parts[0].trim()] = parts[1].trim();
+                        }
+                    }
+                } else if (line.startsWith('http')) {
+                    if (currentMeta) {
+                        currentMeta.url = line;
+                        
+                        // Smart auto-group detection for FM stations that lack a category
+                        if (!currentMeta.group) {
+                            const lowercaseName = currentMeta.name.toLowerCase();
+                            const lowercaseUrl = currentMeta.url.toLowerCase();
+                            
+                            if (lowercaseName.includes('radio') || 
+                                lowercaseName.includes('fm') || 
+                                lowercaseName.includes('air') || 
+                                lowercaseUrl.includes('.mp3') ||
+                                lowercaseUrl.includes('.aac') ||
+                                lowercaseUrl.includes('broadwave')) {
+                                currentMeta.group = "FM Radio";
+                            } else {
+                                currentMeta.group = "General";
+                            }
+                        }
+
+                        // Add categories dynamically to selector map
+                        currentMeta.group.split(';').forEach(g => {
+                            if(g.trim()) categories.add(g.trim());
+                        });
+
+                        channels.push(currentMeta);
+                        currentMeta = null;
+                    }
+                }
+            }
+
+            setupCategoryFilters();
+            renderChannels();
+            showNotification(`Succesfully loaded ${channels.length} Malayalam feeds!`);
+        }
+
+        // Setup filter system UI dynamically
+        function setupCategoryFilters() {
+            const select = document.getElementById('category-select');
+            const mobileBar = document.getElementById('mobile-categories-bar');
+            
+            // Clear but keep favorites
+            select.innerHTML = `
+                <option value="ALL">All Categories</option>
+                <option value="FAVORITES">⭐ Favorites Only</option>
+            `;
+            
+            mobileBar.innerHTML = `
+                <button onclick="setCategoryFilter('ALL')" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-600 text-white transition-all shadow-md">All</button>
+                <button onclick="setCategoryFilter('FAVORITES')" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 transition-all">⭐ Favorites</button>
+            `;
+
+            // Sort and inject detected genres
+            const sortedCategories = Array.from(categories).sort();
+            sortedCategories.forEach(cat => {
+                // Dropdown Addition
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                select.appendChild(option);
+
+                // Mobile Bar Pill Addition
+                const pill = document.createElement('button');
+                pill.className = "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all inline-block shadow-md";
+                pill.onclick = () => setCategoryFilter(cat);
+                pill.textContent = cat;
+                mobileBar.appendChild(pill);
+            });
+
+            document.getElementById('channel-count').textContent = `Channels: ${channels.length}`;
+        }
+
+        // Apply visual and logical categorization rules
+        function setCategoryFilter(category) {
+            selectedCategory = category;
+            
+            // Sync desktop dropdown selection
+            document.getElementById('category-select').value = category;
+            
+            // Sync mobile selection state pill highlighting
+            const mobileBar = document.getElementById('mobile-categories-bar');
+            const buttons = mobileBar.getElementsByTagName('button');
+            for(let btn of buttons) {
+                btn.className = "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 transition-all inline-block shadow-md";
+            }
+            
+            if (category === "ALL") {
+                buttons[0].className = "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-600 text-white transition-all inline-block shadow-md";
+                isFavOnly = false;
+            } else if (category === "FAVORITES") {
+                buttons[1].className = "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-600 text-white transition-all inline-block shadow-md";
+                isFavOnly = true;
+            } else {
+                const targetBtn = Array.from(buttons).find(b => b.textContent === category);
+                if (targetBtn) {
+                    targetBtn.className = "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-600 text-white transition-all inline-block shadow-md";
+                }
+                isFavOnly = false;
+            }
+
+            renderChannels();
+        }
+
+        // Sync Desktop Select Option Change
+        function filterChannels() {
+            const dropdownVal = document.getElementById('category-select').value;
+            setCategoryFilter(dropdownVal);
+        }
+
+        // Quick Heart Indicator button filter
+        function toggleFavFilterOnly() {
+            const btn = document.getElementById('fav-toggle-btn');
+            isFavOnly = !isFavOnly;
+            
+            if (isFavOnly) {
+                btn.className = "p-2 bg-amber-600 hover:bg-amber-500 border border-amber-500 rounded-xl text-white transition-all shadow-lg";
+                setCategoryFilter("FAVORITES");
+            } else {
+                btn.className = "p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800/80 rounded-xl text-amber-500 hover:text-amber-400 transition-all";
+                setCategoryFilter("ALL");
+            }
+        }
+
+        // Render dynamic lists to screen space
+        function renderChannels() {
+            const container = document.getElementById('channels-container');
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            
+            container.innerHTML = '';
+            let resultsCount = 0;
+
+            channels.forEach((chan, index) => {
+                const matchesCategory = 
+                    selectedCategory === "ALL" || 
+                    (selectedCategory === "FAVORITES" && favorites.has(chan.url)) ||
+                    chan.group.split(';').map(g => g.trim()).includes(selectedCategory);
+
+                const matchesSearch = chan.name.toLowerCase().includes(searchQuery);
+
+                if (matchesCategory && matchesSearch) {
+                    resultsCount++;
+                    const isFav = favorites.has(chan.url);
+                    const isActive = currentChannel && currentChannel.url === chan.url;
+                    
+                    const card = document.createElement('div');
+                    card.className = `group flex items-center justify-between p-2.5 rounded-xl transition-all duration-150 cursor-pointer border ${
+                        isActive 
+                        ? 'bg-indigo-600/20 border-indigo-500/40 shadow-inner' 
+                        : 'bg-slate-950/40 border-slate-800/50 hover:bg-slate-850 hover:border-slate-700/60'
+                    }`;
+                    
+                    // Card click callback
+                    card.onclick = (e) => {
+                        if (!e.target.closest('.fav-btn')) {
+                            selectChannel(chan);
+                        }
+                    };
+
+                    // Premium SVG fallbacks for missing logos
+                    const logoMarkup = chan.logo 
+                        ? `<img class="w-10 h-10 rounded-lg object-contain bg-slate-950 p-1 border border-slate-800/60 shadow-md" src="${chan.logo}" alt="${chan.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
+                        : '';
+                    
+                    const placeholderLogo = `
+                        <div style="${chan.logo ? 'display:none;' : ''}" class="w-10 h-10 rounded-lg bg-gradient-to-tr from-slate-800 to-slate-900 border border-slate-700/50 flex items-center justify-center text-indigo-400 font-bold text-xs shrink-0 shadow-md">
+                            ${chan.group.includes('Radio') ? '📻' : '📺'}
+                        </div>
+                    `;
+
+                    card.innerHTML = `
+                        <div class="flex items-center space-x-3 overflow-hidden min-w-0 flex-1">
+                            <div class="relative shrink-0">
+                                ${logoMarkup}
+                                ${placeholderLogo}
+                                <div class="absolute -top-1 -left-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-slate-900 ${isActive ? 'block' : 'hidden'}"></div>
+                            </div>
+                            <div class="text-left leading-tight truncate min-w-0">
+                                <h4 class="text-xs font-bold text-slate-100 group-hover:text-white truncate">${chan.name}</h4>
+                                <span class="text-[9px] font-semibold text-slate-500 tracking-wide uppercase truncate block mt-0.5">${chan.group}</span>
+                            </div>
+                        </div>
+                        <button onclick="toggleFavorite('${chan.url}', event)" class="fav-btn p-1.5 rounded-lg text-slate-600 hover:text-amber-500 transition-colors shrink-0 ml-2">
+                            <svg class="w-4 h-4 ${isFav ? 'text-amber-500 fill-current' : 'text-slate-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.243.588 1.81l-3.97 2.88a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.88a1 1 0 00-1.178 0l-3.97 2.88c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118l-3.97-2.88c-.773-.568-.374-1.81.588-1.81h4.906a1 1 0 00.95-.69l1.519-4.674z"></path>
+                            </svg>
+                        </button>
+                    `;
+                    container.appendChild(card);
+                }
+            });
+
+            if (resultsCount === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-16 text-slate-500 flex flex-col items-center">
+                        <span class="text-3xl mb-2">🔍</span>
+                        <p class="text-xs font-semibold text-slate-400">No channels found</p>
+                        <p class="text-[10px] text-slate-600 mt-1">Try searching with a different name or FM frequency.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Select and trigger channel play
+        function selectChannel(chan) {
+            currentChannel = chan;
+            
+            // Alert user of status
+            showNotification(`Connecting: ${chan.name}`);
+            
+            // Hide standard overlay first
+            playerOverlay.classList.add('opacity-0', 'pointer-events-none');
+
+            // Handle custom Referer notifications inside the player console
+            if (Object.keys(chan.headers).length > 0) {
+                console.info("Requires custom HTTP referrer connection: ", chan.headers);
+            }
+
+            // Sync layout banners and visualizers
+            updatePlayingBanner();
+
+            // Detect if selected stream is Audio/FM Radio versus Video
+            const isRadio = chan.group.includes('Radio') || chan.url.endsWith('.mp3') || chan.url.includes('broadwave');
+            if (isRadio) {
+                // Show Radio Mode with Vinyl Graphics
+                radioVisualizer.classList.remove('hidden');
+                radioStickerLogo.src = chan.logo || 'https://images.unsplash.com/photo-1598257006458-087169a1f08d?auto=format&fit=crop&w=150&q=80';
+                radioStationTitle.textContent = chan.name;
+            } else {
+                // Hide Radio Mode and show video output
+                radioVisualizer.classList.add('hidden');
+            }
+
+            // Stream Playback Trigger
+            playStream(chan.url);
+
+            // Re-render channel elements to update dynamic dots
+            renderChannels();
+        }
+
+        // Render current playing titles 
+        function updatePlayingBanner() {
+            if(!currentChannel) return;
+
+            // Sync desktop banners
+            document.getElementById('current-title').textContent = currentChannel.name;
+            document.getElementById('current-group').textContent = currentChannel.group;
+            document.getElementById('current-logo').src = currentChannel.logo || 'https://images.unsplash.com/photo-1598257006458-087169a1f08d?auto=format&fit=crop&w=150&q=80';
+
+            // Sync mobile banners
+            document.getElementById('mobile-current-title').textContent = currentChannel.name;
+            document.getElementById('mobile-current-group').textContent = currentChannel.group;
+            document.getElementById('mobile-current-logo').src = currentChannel.logo || 'https://images.unsplash.com/photo-1598257006458-087169a1f08d?auto=format&fit=crop&w=150&q=80';
+
+            // Manage Star Fav Indicator styles in Playing banners
+            const isFav = favorites.has(currentChannel.url);
+            const favIconDesktop = document.getElementById('current-fav-icon');
+            const favIconMobile = document.getElementById('mobile-fav-icon');
+
+            if(isFav) {
+                favIconDesktop.setAttribute('fill', 'currentColor');
+                favIconMobile.setAttribute('fill', 'currentColor');
+            } else {
+                favIconDesktop.setAttribute('fill', 'none');
+                favIconMobile.setAttribute('fill', 'none');
+            }
+        }
+
+        // Pure Live HLS Parser Engine
+        function playStream(url) {
+            // Safe teardown of prior play objects
+            if (hlsInstance) {
+                hlsInstance.destroy();
+                hlsInstance = null;
+            }
+
+            if (Hls.isSupported()) {
+                hlsInstance = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 60,
+                    maxBufferLength: 30
+                });
+                
+                hlsInstance.loadSource(url);
+                hlsInstance.attachMedia(videoElement);
+                
+                hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+                    videoElement.play().catch(e => console.warn("Browser prevented autoplay:", e));
+                });
+
+                hlsInstance.on(Hls.Events.ERROR, function(event, data) {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.warn("Network issue. Retrying...");
+                                hlsInstance.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.warn("Media decoding issue. Recovering...");
+                                hlsInstance.recoverMediaError();
+                                break;
+                            default:
+                                showPlayerFailureState("Offline Stream / Protected", "This stream is currently offline, requires custom browser headers, or is restricted to regional IP zones.");
+                                break;
+                        }
+                    }
+                });
+
+            } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                // Safari or Mobile iOS devices fallback Native support
+                videoElement.src = url;
+                videoElement.addEventListener('loadedmetadata', function() {
+                    videoElement.play().catch(e => console.warn("Browser prevented autoplay:", e));
+                });
+            } else {
+                // If browser can't play .m3u8 directly and doesn't support Hls.js
+                // Check if it's an MP3 or standard audio link
+                if (url.endsWith('.mp3') || url.includes('broadwave') || url.includes('.aac')) {
+                    videoElement.src = url;
+                    videoElement.play().catch(e => console.warn("Browser prevented autoplay:", e));
+                } else {
+                    showPlayerFailureState("Incompatible Browser", "This browser does not support HLS (.m3u8) video decoding. Please try modern browser like Google Chrome or Firefox.");
+                }
+            }
+        }
+
+        // Active Player Fail state screens
+        function showPlayerFailureState(title, description) {
+            if (hlsInstance) {
+                hlsInstance.destroy();
+                hlsInstance = null;
+            }
+            videoElement.src = "";
+            playerOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            radioVisualizer.classList.add('hidden'); // Hide FM layout if failed
+            overlayTitle.textContent = title;
+            overlayDesc.textContent = description;
+        }
+
+        // Persist Favorite Status inside application arrays
+        function toggleFavorite(url, event) {
+            if(event) event.stopPropagation();
+
+            if (favorites.has(url)) {
+                favorites.delete(url);
+                showNotification("Removed from Favorites");
+            } else {
+                favorites.add(url);
+                showNotification("Added to Favorites ⭐");
+            }
+
+            // Sync with memory cache state
+            sessionStorage.setItem('kerala_stream_favs', JSON.stringify(Array.from(favorites)));
+            
+            // Dynamic refresh inside banner models
+            if(currentChannel && currentChannel.url === url) {
+                updatePlayingBanner();
+            }
+
+            renderChannels();
+        }
+
+        // Sync Favorites Trigger on Playing Stream
+        function toggleFavoriteCurrent() {
+            if(!currentChannel) {
+                showNotification("No live stream currently active.");
+                return;
+            }
+            toggleFavorite(currentChannel.url);
+        }
+
+        // Toggle Modal Interface Popups
+        function toggleImportModal() {
+            const modal = document.getElementById('import-modal');
+            const isVisible = modal.classList.contains('opacity-100');
+            
+            if (isVisible) {
+                modal.classList.remove('opacity-100', 'pointer-events-auto');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                modal.children[0].classList.add('scale-95');
+                modal.children[0].classList.remove('scale-100');
+            } else {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modal.classList.add('opacity-100', 'pointer-events-auto');
+                modal.children[0].classList.remove('scale-95');
+                modal.children[0].classList.add('scale-100');
+            }
+        }
+
+        // Local Upload Trigger FileReader Actions
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                fileLoadedContent = e.target.result;
+                document.getElementById('raw-m3u-input').value = fileLoadedContent;
+            };
+            reader.readAsText(file);
+        }
+
+        // Execute Custom Playlist load actions
+        function loadCustomPlaylist() {
+            const pastedText = document.getElementById('raw-m3u-input').value.trim();
+            
+            if (pastedText.length === 0) {
+                showNotification("Error: Please load or paste M3U playlist content.");
+                return;
+            }
+
+            if (!pastedText.includes('#EXTM3U')) {
+                showNotification("Error: Invalid M3U formatting detected.");
+                return;
+            }
+
+            parseM3U(pastedText);
+            toggleImportModal();
+        }
+
+        // Premium Notification Controller 
+        function showNotification(message) {
+            toastMessage.textContent = message;
+            toast.classList.remove('opacity-0', 'translate-y-2');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-2');
+            }, 3500);
+        }
+
+        // ==========================================
+        // SECURE AUTOMATIC SERVICE WORKER REGISTRATION
+        // ==========================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker successfully registered! Scope: ', reg.scope))
+                    .catch(err => console.error('Service worker registration failed: ', err));
+            });
+        }
+    </script>
+</body>
+</html>
